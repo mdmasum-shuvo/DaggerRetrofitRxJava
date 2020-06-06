@@ -1,27 +1,24 @@
 package com.masum.daggerretrofit.viewmodels;
 
-import android.util.Log;
-
+import androidx.lifecycle.LiveData;
+import androidx.lifecycle.LiveDataReactiveStreams;
+import androidx.lifecycle.MediatorLiveData;
+import androidx.lifecycle.Observer;
 import androidx.lifecycle.ViewModel;
-
 import com.masum.daggerretrofit.models.User;
 import com.masum.daggerretrofit.network.AuthApiInterface;
-
 import javax.inject.Inject;
-
-import io.reactivex.Observer;
-import io.reactivex.Scheduler;
-import io.reactivex.disposables.Disposable;
 import io.reactivex.schedulers.Schedulers;
 
 public class AuthViewModel extends ViewModel {
     private final AuthApiInterface apiInterface;
 
+    private MediatorLiveData<User> authUser=new MediatorLiveData<>();
     @Inject
     public AuthViewModel(AuthApiInterface apiInterface) {
         this.apiInterface = apiInterface;
 
-        if (apiInterface == null) {
+/*        if (apiInterface == null) {
             Log.e("data", "auth api is null");
         } else {
             Log.e("data", "auth api is not null");
@@ -51,6 +48,26 @@ public class AuthViewModel extends ViewModel {
                         }
                     });
 
-        }
+        }*/
+    }
+
+
+    public void authenticateWithId(int id){
+        final LiveData<User> source= LiveDataReactiveStreams.fromPublisher(
+                apiInterface.getUser(id)
+                        .subscribeOn(Schedulers.io())
+        );
+
+        authUser.addSource(source, new Observer<User>() {
+            @Override
+            public void onChanged(User user) {
+                authUser.setValue(user);
+                authUser.removeSource(source);
+            }
+        });
+    }
+
+    public LiveData<User> observerUser(){
+        return authUser;
     }
 }
