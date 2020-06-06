@@ -53,12 +53,36 @@ public class AuthActivity extends DaggerAppCompatActivity {
         subcribeObserver();
     }
 
+    private void progressLoading(){
+        binding.progressBar.setVisibility(View.VISIBLE);
+    }
+
+    private void progressHide(){
+        binding.progressBar.setVisibility(View.GONE);
+    }
+
     private void subcribeObserver() {
-        viewModel.observerUser().observe(this, new Observer<User>() {
+        viewModel.observerUser().observe(this, new Observer<AuthResource<User>>() {
             @Override
-            public void onChanged(User user) {
-                if (user !=null)
-                Log.e("data", user.getEmail());
+            public void onChanged(AuthResource<User> userAuthResource) {
+                if (userAuthResource != null) {
+
+                    switch (userAuthResource.status) {
+                        case LOADING:
+                            progressLoading();
+                            break;
+                        case ERROR:
+                            progressHide();
+                            Log.e("data",userAuthResource.message);
+                            break;
+                        case AUTHENTICATED:
+                            Log.e("data",userAuthResource.data.getEmail());
+
+                            break;
+                        case NOT_AUTHENTICATED:
+                            break;
+                    }
+                }
             }
         });
     }
